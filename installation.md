@@ -15,6 +15,11 @@
 ### b) If using Docker-CE (Engine) without Desktop
 - You'll need to install necessary **CLI plugins manually** for commands like `docker sbom`, `docker scout`, and others.
 
+### Install the following command-line tools:
+
+- `vexctl`
+- 
+
 ---
 
 ## Installation & Availability by Command
@@ -27,10 +32,6 @@
 | **SBOM attestation** (`buildx --sbom`) | BuildKit feature, open‑source    | Free / Open‑source                                 | Available since BuildKit enabled in Scout features (post‑2023) | Use `docker buildx build --sbom=true` with proper builder.     |
 | **docker scout**                       | GA (CLI plugin)                  | Free tier; Scout platform may require subscription | Plugin included since Desktop 4.17                             | Install plugin if using CE manually.                           |
 | **docker debug**                       | GA                               | Requires Pro, Team, or Business subscription       | Docker Desktop 4.33 or later                                   | Included in Desktop. CE: Not available.                        |
-| **docker model run**                   | GA (Docker Model Runner)         | Free                                               | Available in CE, Desktop 4.40 for MacOS, and 4.41 for Windows  | Automatic in Desktop; CE: requires manual plugin installation. |
-| **Ask Gordon** (`docker ai`)           | Beta                             | Proprietary (requires private account)             | Present in Desktop 4.38.0 or later                             | Desktop only.                                                  |
-| **Docker's MCP catalog**               | AI Catalog (Marketplace) feature | Free (with Docker Hub account)                     | -                                                              | -                                                              |
-| **CAgent**                             | Experimental                     | Free (for now)                                     | Standalone binary                                              | See below.                                                     |
 
 ---
 

@@ -2,7 +2,6 @@
 
 This repository contains the source code and resources for the **10 Docker Commandos** workshop at Rabobank in March 2026. The workshop will cover the following topics:
 
-- 0️⃣ [CVEs](#cves)
 - 1️⃣ [Docker Init](#commando-1-docker-init)
 - 2️⃣ [SBOM](#commando-2-sbom)
 - 3️⃣ [Scout](#commando-3-scout)
@@ -51,9 +50,7 @@ flowchart TD
     style I fill:#ffebee
 ```
 
-## The Story: Attack on Asgard
-
-CVEs have breached the walls of Asgard! Thor's hammer is useless against these shadow-based vulnerabilities. Odin summons the **Docker Commandos** to hunt down these hidden predators and secure the realm.
+## Docker Commandos
 
 ![Docker Commandos](https://www.dockersecurity.io/blog-img/commandos-v5.png)
 
@@ -70,13 +67,24 @@ Meet your team:
 
 ## Prerequisites
 
-Before joining the hunt, make sure you have:
+Before starting the journey, check [installation instructions](installation.md) to setup Docker Desktop, CLI tools, and pull the necessary images.
 
-- Docker Desktop (latest version)
-- Git
-- A Bash shell (Git Bash on Windows, Terminal on macOS/Linux)
-- A Docker Hub account
-- Text editor of choice
+## Notes
+
+- Add all of the images to be pulled
+- Login to DHI and use Rabobank business account
+- JJ jumps in at DHI
+- Some people might have Windows
+- Around 80-100 people will join, a mix of DevOps and developers
+- Contact Soroush for SBOM
+- https://www.linkedin.com/posts/tbijlsma_last-tuesday-i-had-the-privilege-of-presenting-activity-7402252561585680385-sVxv?utm_source=share&utm_medium=member_desktop&rcm=ACoAAAHcSLcBVO9L06OmqmRkhdttGAoyKQ4T3js
+- https://www.linkedin.com/posts/chi-man-cheung-31651b101_qbr-tech4engineering-teamwork-activity-7402442052581474304-Xlp5?utm_source=share&utm_medium=member_desktop&rcm=ACoAAAHcSLcBVO9L06OmqmRkhdttGAoyKQ4T3js
+
+Get the credentials from Docker Desktop and login to DHI.io:
+
+```shell
+echo index.docker.io | docker-credential-desktop get | jq -r '"-u \(.Username) --password-stdin"' | xargs -I {} sh -c 'echo $(echo index.docker.io | docker-credential-desktop get | jq -r .Secret) | docker login dhi.io {}'
+```
 
 ## Setup
 
@@ -87,13 +95,19 @@ git clone https://github.com/DockerSecurity-io/commandos-v1.5
 cd commandos-v1.5
 ```
 
-Let's begin the hunt! 🎯
+## Prologue: The Attack on Asgard
+
+Thor enters Odin's chamber hastily, "Father, Asgard is under attack! Shadow monsters called CVEs are in Asgard and my hammer Mjolnir can't destroy them!" Odin looks at him calmly, "**Summon the Docker Commandos**!"
+
+![Docker Commandos](https://www.dockersecurity.io/commandos-asgard/asgard-1.png)
 
 ## Commando 1. Docker Init
 
-**Mission**: Docker Commandos arrive at Asgard and initiate their mission to contain the outbreak.
+**Mission**: Docker Commandos arrive at Asgard and initiate their mission to contain the outbreak. Gord orders, "Set up a command center for us". Valkyrie and Agent Null start setting up the command center, while Jack and Evie secure the perimeter.
 
 **Real-world context**: Docker Init creates secure, production-ready Dockerfiles using established best practices, reducing the likelihood of security misconfigurations from day one.
+
+---
 
 _Main article: [Dockerizing a Java 24 Project with Docker Init](https://dockerhour.com/dockerizing-a-java-24-project-with-docker-init-6f6465758c55)_  
 _Main article: [JAVAPRO: How to Containerize a Java Application Securely](https://javapro.io/2025/07/03/how-to-containerize-a-java-application-securely/)_
@@ -125,10 +139,10 @@ Then, run the Docker Init command:
 docker init
 ```
 
-The command will ask you 4 questions, accept the defaults:
+The command will ask you 4 questions, accept the defaults except for the Python version, that you should set to 3.14.3:
 
 - ? What application platform does your project use? **Python**
-- ? What version of Python do you want to use? **3.13.7**
+- ? What version of Python do you want to use? **3.14.3**
 - ? What port do you want your app to listen on? **8000**
 - ? What is the command you use to run your app? **gunicorn 'hello:app' --bind=0.0.0.0:8000**
 
@@ -151,9 +165,13 @@ The application will be available at [http://localhost:8000](http://localhost:80
 
 **Mission**: Rothütle asks Thor for a list of all Asgard residents. Now the Commandos can cross-reference with the CVE database to identify which residents are CVEs.
 
+![Rothütle asking for the SBOM](https://www.dockersecurity.io/commandos-asgard/asgard-2.png)
+
 **Real-world context**: SBOM (Software Bill of Materials) lists all components, libraries, and dependencies in your software. Essential for identifying vulnerabilities in your supply chain.
 
-_Requirement: This step requires the [Docker Init](#commando-1-docker-init) step to be completed first._
+---
+
+_Requirement: This step requires the [Docker Init](#commando-1-docker-init) step to be completed first. Otherwise, use the directory `flask-init`._
 
 Docker SBOM is integrated into Docker Desktop, but is also available for Docker CE as a CLI plugin that you need to install separately.
 
@@ -215,7 +233,7 @@ It will say there are no packages in the image, because the image is built from 
 ### Exercises
 
 - 2.1. Use `docker sbom --help` to check available formats for the SBOM output.
-- 2.2. Compare different base images: `docker sbom node:18` vs `docker sbom node:18-alpine` - which has fewer packages?
+- 2.2. Compare different base images: `docker sbom node:22` vs `docker sbom node:22-alpine` - which has fewer packages?
 
 ---
 
@@ -223,7 +241,11 @@ It will say there are no packages in the image, because the image is built from 
 
 **Mission**: Gord orders Jack, Agent Null, and Mina to scout the remaining districts of Asgard for hidden CVEs. "Let's hunt some CVEs!" says Null.
 
+![Scout hunting for CVEs](https://www.dockersecurity.io/commandos-asgard/asgard-3.png)
+
 **Real-world context**: Docker Scout analyzes your images for vulnerabilities by cross-referencing the SBOM with CVE databases, providing actionable security intelligence.
+
+---
 
 _Requirement: This step requires the [SBOM](#commando-2-sbom) step to be completed first._
 
@@ -274,8 +296,6 @@ docker scout cves my-react-app
 # Recommendation: Upgrade to react@19.0.1 or later
 ```
 
-**False Positive Management**: Not every CVE affects your specific use case - unused code paths, network isolation, and runtime mitigations can prevent exploitation.
-
 ### Exercises
 
 - 3.1. Try to fix the vulnerabilities in the Flask image using the recommendations from Docker Scout.
@@ -288,7 +308,11 @@ docker scout cves my-react-app
 
 **Mission**: The Valkyrie sets up a camera with face recognition and says, "I can generate an ID card for everyone in Asgard, and attach it to their database face record. That way, we can verify their identity at the checkpoints."
 
+![SBOM Attestations](https://www.dockersecurity.io/commandos-asgard/asgard-3.1.png)
+
 **Real-world context**: SBOM attestations are SBOMs generated during build time and cryptographically signed, providing tamper-proof component information that travels with your image.
+
+---
 
 _Requirement: This step requires the [Scout](#commando-3-scout) step to be completed first._
 
@@ -352,19 +376,25 @@ SBOM of image already cached, 208 packages indexed
 
 **Enterprise Compliance**: SLSA Level 3 requires signed attestations, FIPS 140-2 needs cryptographic verification, and SOC 2 Type II uses attestations as auditable supply chain evidence.
 
+**FIPS** or **Federal Information Processing Standards** are a set of standards for cryptographic modules used by the US government. FIPS 140-2 is a specific standard that defines security requirements for cryptographic modules. SBOM attestations that are FIPS-compliant can be used in environments that require FIPS validation.
+
 ### Exercises
 
 - 4.1. Create a Docker Bake file for the C++ example with SBOM attestations.
-- 4.2. Generate SBOM locally instead of pushing: `docker buildx build --sbom=true --sbom-output=type=local,dest=. -t test-image .`
+- 4.2. Store the SBOM locally: `docker buildx build --sbom=true --sbom-output=type=local,dest=. -t test-image .`
 - 4.3. Compare SBOM results with and without `BUILDKIT_SBOM_SCAN_STAGE=true` for a multi-stage build.
 
 ---
 
 ## Commando 5. Docker Hardened Images
 
-**Mission**: The Commandos reach the golden gates of a heavily fortified district. Thor says, "This district is heavily fortified, no CVE can get in here." The district is guarded by Hardened Warriors led by **Artemisia**, who says "I know how to recognize CVEs."
+**Mission**: The Commandos reach the golden gates of a heavily fortified district. Thor says, "This district is heavily fortified, no CVE can get in here." The district is guarded by Hardened Warriors led by **Artemisia**, who says "I know how to recognize CVEs, I will join you."
+
+![Hardened Images](https://www.dockersecurity.io/commandos-asgard/asgard-4.png)
 
 **Real-world context**: Docker Hardened Images (DHI) are near-zero-CVE base images maintained by Docker, providing a more secure foundation with dramatically reduced attack surface.
+
+---
 
 _Main article: [Docker Hardened Images are Free](https://www.dockersecurity.io/blog/docker-hardened-images-are-free)_
 
@@ -413,16 +443,24 @@ To check with Trivy:
 trivy image --scanners vuln dhi.io/node:25
 ```
 
-### Deep Dive: Attack Surface Reduction and Security Engineering
+Trivy lists more CVEs, that's because a few CVEs are silenced by the VEX statement that Docker Scout is aware of, but Trivy is not. One can manually download the VEX statement and pass it to Trivy when scanning.
 
-**Hardening Statistics** (as of December 2025)[^4]:
+In the Flask example, we used slim images. Replace it with a hardened Python image:
 
+```dockerfile
+# Not hardened image
+FROM python:${PYTHON_VERSION}-slim as base
+
+# Hardened image
+FROM dhi.io/python:${PYTHON_VERSION}-alpine3.23-fips-dev as base
 ```
-Standard node:20    vs    dhi.io/node:20
-- 169 low CVEs             8 low CVEs
-- 17 medium CVEs           0 medium CVEs
-- 9 high CVEs              0 high CVEs
-- 0 critical CVEs          0 critical CVEs
+
+The hardened image has 0 CVEs at the time of writing and is FIPS-compliant. Please note that we had to choose an Alpine-based hardened image, because the original slim image was Alpine-based. If we had used a Debian-based image, we needed to change the Alpine commands like `adduser` to Debian equivalents.
+
+Run the application once more to verify it works with the hardened image:
+
+```bash
+docker compose up --build
 ```
 
 ### Exercises
@@ -439,28 +477,33 @@ Standard node:20    vs    dhi.io/node:20
 
 **Real-world context**: Not all CVEs are exploitable in your specific context. VEX (Vulnerability Exploitability eXchange) allows you to mark CVEs as not applicable to reduce alert noise and focus on real threats.
 
+---
+
 VEX is a standardized format for communicating the exploitability of vulnerabilities in software components.
 
 ### Usage
 
-Find a CVE to exempt:
+Check the latest Flask image for CVEs:
 
 ```bash
-cd exercises/node-app
-docker scout cves node-app | grep CVE
-# Pick a CVE that's in a dependency you don't use
+docker scout cves flask-hello:latest
 ```
 
-Install vexctl:
+At the time of writing, if you use DHI base image, you will have one medium CVE and a bunch of low CVEs:
 
-```bash
-# macOS
-brew install vexctl
+```
+   0C     0H     1M     1L  tar 1.35+dfsg-3.1
+pkg:deb/debian/tar@1.35%2Bdfsg-3.1?os_distro=trixie&os_name=debian&os_version=13
 
-# Linux
-wget https://github.com/openvex/vex/releases/latest/download/vexctl-linux-amd64
-chmod +x vexctl-linux-amd64
-sudo mv vexctl-linux-amd64 /usr/local/bin/vexctl
+    ✗ MEDIUM CVE-2025-45582
+      https://scout.docker.com/v/CVE-2025-45582
+      Affected range : >=1.35+dfsg-3.1  
+      Fixed version  : not fixed        
+    
+    ✗ LOW CVE-2005-2541
+      https://scout.docker.com/v/CVE-2005-2541
+      Affected range : <=1.35+dfsg-3.1  
+      Fixed version  : not fixed 
 ```
 
 Create a VEX statement:
@@ -468,24 +511,35 @@ Create a VEX statement:
 ```bash
 vexctl create \
   --author="your-email@example.com" \
-  --product="pkg:docker/example/node-app@v1" \
-  --subcomponents="pkg:npm/vulnerable-package@1.0.0" \
-  --vuln="CVE-2023-12345" \
+  --product="pkg:docker/flask-hello@latest" \
+  --subcomponents="pkg:deb/debian/tar@1.35+dfsg-3.1" \
+  --vuln="CVE-2025-45582" \
   --status="not_affected" \
   --justification="vulnerable_code_not_in_execute_path" \
-  --file="CVE-2023-12345.vex.json"
+  --file="CVE-2025-45582.vex.json"
 ```
 
-Apply VEX to Scout scan:
+Apply the VEX statement to Scout scan:
 
 ```bash
 mkdir vex-statements
-mv CVE-2023-12345.vex.json vex-statements/
+mv CVE-2025-45582.vex.json vex-statements/
 
-docker scout cves node-app --vex-location ./vex-statements
+docker scout cves flask-hello --vex-location ./vex-statements
 ```
 
-The CVE should disappear from the Scout output.
+The CVE is now marked as not affected:
+
+```
+pkg:deb/debian/tar@1.35%2Bdfsg-3.1?os_distro=trixie&os_name=debian&os_version=13
+
+    ✗ MEDIUM CVE-2025-45582
+      https://scout.docker.com/v/CVE-2025-45582
+      Affected range : >=1.35+dfsg-3.1                                     
+      Fixed version  : not fixed                                           
+      VEX            : not affected [vulnerable code not in execute path]  
+                     : your-email@example.com                              
+```
 
 ### Deep Dive: VEX Standards and Context Analysis
 
@@ -495,12 +549,6 @@ The CVE should disappear from the Scout output.
 - **affected**: Vulnerability impacts the product, action required
 - **fixed**: Vulnerability resolved in specified version
 - **under_investigation**: Impact being assessed
-
-**Log4Shell Context Example**: Log4Shell (CVE-2021-44228) affected Log4j differently across applications:
-
-- Apps logging user input: `status="affected"` - immediate upgrade required
-- Apps logging only internal events: `status="not_affected"` with justification `vulnerable_code_cannot_be_controlled_by_adversary`
-- Apps including Log4j but using different logging: `status="not_affected"` with justification `vulnerable_code_not_in_execute_path`
 
 ### Exercises
 
@@ -513,31 +561,37 @@ The CVE should disappear from the Scout output.
 
 **Mission**: The Valkyrie issues "Check Exemption" badges for the Exempted CVEs, and adds them to the checkpoints. "The Exempted CVEs can pass through the checkpoints without being flagged, as they are not a threat to us."
 
+![Mina found a new warrior when fighting CVEs](https://www.dockersecurity.io/commandos-asgard/asgard-4.5.png)
+
 **Real-world context**: VEX attestations are cryptographically signed exemptions that travel with your image, providing tamper-proof vulnerability exception documentation that's verified automatically.
 
-_Requirement: This step requires the [Exempted CVEs](#commando-6-the-exempted-cves) step to be completed first._
+---
+
+_Requirement: This step requires the [SBOM Attestations](#commando-4-sbom-attestations) and [Exempted CVEs](#commando-6-the-exempted-cves) step to be completed first._
 
 ### Usage
 
-Build image with SBOM and provenance:
+Let's build the Flask example with SBOM attestations enabled and push to Docker Hub:
 
 ```bash
 docker buildx build \
   --sbom=true \
   --provenance=true \
-  --push \
-  -t [your-dockerhub-username]/vex-demo .
+  --push
+  -t aerabi/flask-hello:with-sbom .
 ```
 
-Create VEX statement:
+You need to use your own Docker Hub username in the tag.
+Now let's create a VEX statement for the medium CVE but for the pushed image:
 
 ```bash
 vexctl create \
-  --author="workshop@example.com" \
-  --product="pkg:docker/[your-dockerhub-username]/vex-demo@latest" \
-  --vuln="CVE-2023-12345" \
+  --author="aerabi@gmx.de" \
+  --product="pkg:docker/aerabi/flask-hello@with-sbom" \
+  --subcomponents="pkg:deb/debian/tar@1.35+dfsg-3.1" \
+  --vuln="CVE-2025-45582" \
   --status="not_affected" \
-  --justification="vulnerable_code_not_present" \
+  --justification="vulnerable_code_not_in_execute_path" \
   --file="exemption.vex.json"
 ```
 
@@ -547,21 +601,13 @@ Add VEX attestation to image:
 docker scout attestation add \
   --file exemption.vex.json \
   --predicate-type https://openvex.dev/ns/v0.2.0 \
-  [your-dockerhub-username]/vex-demo
+  aerabi/flask-hello:with-sbom
 ```
 
-Alternatively, include VEX in build:
-
-```dockerfile
-# In your Dockerfile
-COPY exemption.vex.json /vex/
-```
-
-Verify VEX attestation is applied:
+Next time, you won't need to pass the VEX statement to the Scout scan, as it is already attached to the image:
 
 ```bash
-docker scout cves [your-dockerhub-username]/vex-demo
-# The exempted CVE should not appear
+docker scout cves aerabi/flask-hello:with-sbom
 ```
 
 ### Deep Dive: VEX Attestations and OCI Referrers
@@ -580,24 +626,17 @@ To check the OCI referrers for an image, one can use the `oras` CLI tool:
 
 ```bash
 oras pull --include-subject dhi.io/node:20 
-oras discover dhi.io/node:20
+oras discover dhi.io/node:20 --platform linux/amd64
 ```
 
-The output is something like this:
-
-```
-dhi.io/node@sha256:994ecfaa2453eab7077ceb7c886f0ef6bee411a2138e3619cd3a3bb3b1ae866c
-└── application/vnd.dev.cosign.artifact.sig.v1+json
-    └── sha256:e8f499ac859628ec6b2b446abf390d4ffd117ef0839a3e57d080f94745f3ebf4
-```
+The output will list all sorts of OCI referrers, including the VEX attestations, SBOMs, provenance, and their signatures by Cosign.
 
 The tree shows that the image has an attestation of type `application/vnd.dev.cosign.artifact.sig.v1+json`, which is a Cosign signature. The attestation is signed with the key that has the digest `sha256:e8f499ac859628ec6b2b446abf390d4ffd117ef0839a3e57d080f94745f3ebf4`.
 
 ### Exercises
 
-- 7.1. Implement automated VEX generation based on static code analysis.
-- 7.2. Integrate VEX attestations into your CI/CD pipeline.
-- 7.3. Create audit reports showing VEX decision rationale for compliance.
+- 7.1. Research how else can one generate VEX statements besides using `vexctl create` command.
+- 7.2. Explore the OCI referrers for a DHI image and identify the VEX attestation and its signature.
 
 ---
 
@@ -605,7 +644,11 @@ The tree shows that the image has an attestation of type `application/vnd.dev.co
 
 **Mission**: As the Commandos defeated the CVEs in Asgard, they decided to throw a party to celebrate their victory, and discuss the security measures they can implement systematically.
 
+![The Commandos celebrate their victory and discuss systematic security measures](https://www.dockersecurity.io/commandos-asgard/asgard-5.png)
+
 **Real-world context**: Docker Bake allows you to define complex build configurations in files, making security practices repeatable, reviewable, and automated across your entire organization.
+
+---
 
 _Requirement: This step builds on all previous commandos._
 
