@@ -1,82 +1,93 @@
 
-# Pre‑Workshop Installation Guide: 10 Docker Commandos
+# Pre‑Workshop Installation Guide: Docker Commandos v1.5 — Asgard Mission
 
-## 0. Pre‑Workshop Preparation
+> **All shell commands assume a Unix-based terminal (bash/zsh). If you are on Windows, install [Git Bash](https://git-scm.com/downloads) and run all commands from it.**
 
-### a) Install Docker Desktop (recommended)
-- **Download and install** Docker Desktop for your OS.
+---
+
+## 0. Install Docker Desktop
+
+- **Download and install** Docker Desktop for your OS (version **4.63 or later** recommended).
 - **To switch context after installation**, open your terminal and run:
   ```bash
   docker context ls
   docker context use desktop-linux
   ```
-  Make sure to replace `desktop-linux` with the appropriate context for your OS.
-
-### b) If using Docker-CE (Engine) without Desktop
-- You'll need to install necessary **CLI plugins manually** for commands like `docker sbom`, `docker scout`, and others.
-
-### Install the following command-line tools:
-
-- `vexctl`
-- 
+  Replace `desktop-linux` with the appropriate context name for your OS.
 
 ---
 
-## Installation & Availability by Command
+## 1. Clone the Repository
 
-| Command                                | GA or Beta / Availability        | Free / Paid / Open‑source                          | Docker Desktop Version (From)                                  | Notes / Install Steps                                          |
-|----------------------------------------|----------------------------------|----------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
-| **docker init**                        | GA (was Beta)                    | Proprietary (only via Desktop)                     | Beta since Desktop 4.18; GA in ~early 2024 (v4.27+)            | No install needed in Desktop. For CE: not available.           |
-| **docker buildx bake**                 | GA (part of Buildx v0.27.0+)     | Free / Open‑source                                 | Buildx updated in Desktop 4.45 (released 2025‑08‑28)           | Use `docker buildx bake`; ensure Buildx is updated.            |
-| **docker sbom**                        | Plugin (CLI extension)           | Free / Open‑source                                 | Needs plugin install for CE; included in Desktop               | Install plugin manually (see below).                           |
-| **SBOM attestation** (`buildx --sbom`) | BuildKit feature, open‑source    | Free / Open‑source                                 | Available since BuildKit enabled in Scout features (post‑2023) | Use `docker buildx build --sbom=true` with proper builder.     |
-| **docker scout**                       | GA (CLI plugin)                  | Free tier; Scout platform may require subscription | Plugin included since Desktop 4.17                             | Install plugin if using CE manually.                           |
-| **docker debug**                       | GA                               | Requires Pro, Team, or Business subscription       | Docker Desktop 4.33 or later                                   | Included in Desktop. CE: Not available.                        |
+```bash
+git clone https://github.com/DockerSecurity-io/commandos-v1.5
+cd commandos-v1.5
+```
 
 ---
 
-## Manual Plugin Installation for Docker CE (non‑Desktop)
+## 2. Install the Following Command-Line Tools
 
-### 1. **Docker Scout**
-To install Docker Scout manually:
-```bash
-curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh -o install-scout.sh
-sh install-scout.sh
-```
+| Tool | Purpose | Install |
+|------|---------|---------|
+| `vexctl` | Create and manage VEX statements | [github.com/openvex/vexctl/releases](https://github.com/openvex/vexctl/releases) |
+| `oras` | Inspect OCI referrers (SBOMs, VEX, provenance) | [oras.land/docs/installation](https://oras.land/docs/installation) |
+| `trivy` | Alternative container image CVE scanner | [aquasecurity.github.io/trivy](https://aquasecurity.github.io/trivy/latest/getting-started/installation/) |
+| `jq` | JSON processing (used in DHI login script) | `brew install jq` (Mac) / [stedolan.github.io/jq](https://stedolan.github.io/jq/download/) (Windows) |
 
-### 2. **Docker SBOM**
-To install the Docker SBOM plugin:
-```bash
-# install the docker-sbom plugin
-curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
 
-# use the sbom plugin
-docker sbom <my-image>
-```
-
-### 3. **Docker Model Runner**
-Installing Model Runner manually on Linux requires compiling a standalone binary:
+Check the installation with:
 
 ```bash
-git clone https://github.com/docker/model-cli.git
-cd model-cli
-make build
-./model install-runner
+make check
 ```
-
-Then, you can run models like this:
-
-```bash
-model run ai/gemma3
-```
-
-### 4. **CAgent**
-CAgent is not extensively discussed in the workshop, so installation is optional. If you want to try it out, you can download the latest release from the [GitHub releases page](https://github.com/docker/cagent/releases).
 
 ---
 
-## Summary & Tips for Attendees
+## 3. Log In to Docker Hub and DHI
 
-- **Docker Desktop** is strongly recommended as it includes most features out of the box.
-- For **Docker CE users**, manual installation of plugins is necessary for full functionality.
-- Most of the commands won't work on alternative runtimes like **OrbStack**.
+You need a Docker Hub account to push images in Commando 7.
+
+```bash
+docker login
+```
+
+For **Docker Hardened Images (DHI)**, log in to `dhi.io` using your Docker Desktop credentials:
+
+```bash
+echo index.docker.io | docker-credential-desktop get | jq -r '"-u \(.Username) --password-stdin"' | xargs -I {} sh -c 'echo $(echo index.docker.io | docker-credential-desktop get | jq -r .Secret) | docker login dhi.io {}'
+```
+
+> **Note**: Use your Rabobank business Docker Hub account when prompted.
+
+---
+
+## 4. Pre-Pull Images
+
+To avoid slow downloads during the workshop, pull all required images in advance:
+
+```bash
+make pull
+```
+
+---
+
+## 5. Command Availability Reference
+
+| Command | Status | Free / Paid | Desktop Version | Notes |
+|---------|--------|-------------|-----------------|-------|
+| **docker init** | GA | Free (Desktop only) | 4.27+ | Included in Docker Desktop. |
+| **docker buildx bake** | GA | Free / Open-source | 4.45+ | Included in Docker Desktop. |
+| **docker sbom** | Plugin | Free / Open-source | Included | Included in Docker Desktop. |
+| **SBOM attestation** (`buildx --sbom`) | GA | Free / Open-source | Post-2023 | Use `docker buildx build --sbom=true`. |
+| **docker scout** | GA | Free tier | 4.17+ | Included in Docker Desktop. |
+| **docker debug** | GA | Pro/Team/Business | 4.33+ | Included in Docker Desktop. |
+
+---
+
+## Summary
+
+- Install **Docker Desktop 4.63+** — it includes all required Docker features out of the box.
+- **Windows users**: install **Git Bash** and run all commands from it.
+- Run `make check` to verify all tools are installed, and `make pull` to pre-pull all images.
+- Make sure you can log in to both **Docker Hub** and **dhi.io** before arriving.

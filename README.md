@@ -29,16 +29,6 @@ flowchart TD
     G --> H
     H --> I[Zero-Day Defense]
 
-    A -.->|Creates| A1[Dockerfile<br/>compose.yaml<br/>.dockerignore]
-    B -.->|Generates| B1[SPDX/CycloneDX<br/>Component List]
-    C -.->|Identifies| C1[CVEs<br/>Recommendations]
-    D -.->|Signs| D1[Cryptographic<br/>SBOM Proofs]
-    E -.->|Provides| E1[dhi.io Images<br/>Reduced Attack Surface]
-    F -.->|Creates| F1[VEX Statements<br/>Not Affected CVEs]
-    G -.->|Signs| G1[Tamper-proof<br/>Exemptions]
-    H -.->|Builds| H1[Multi-platform<br/>Secure Pipeline]
-    I -.->|Implements| I1[Runtime Protection<br/>Least Privilege]
-
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#fff3e0
@@ -68,23 +58,6 @@ Meet your team:
 ## Prerequisites
 
 Before starting the journey, check [installation instructions](installation.md) to setup Docker Desktop, CLI tools, and pull the necessary images.
-
-## Notes
-
-- Add all of the images to be pulled
-- Login to DHI and use Rabobank business account
-- JJ jumps in at DHI
-- Some people might have Windows
-- Around 80-100 people will join, a mix of DevOps and developers
-- Contact Soroush for SBOM
-- https://www.linkedin.com/posts/tbijlsma_last-tuesday-i-had-the-privilege-of-presenting-activity-7402252561585680385-sVxv?utm_source=share&utm_medium=member_desktop&rcm=ACoAAAHcSLcBVO9L06OmqmRkhdttGAoyKQ4T3js
-- https://www.linkedin.com/posts/chi-man-cheung-31651b101_qbr-tech4engineering-teamwork-activity-7402442052581474304-Xlp5?utm_source=share&utm_medium=member_desktop&rcm=ACoAAAHcSLcBVO9L06OmqmRkhdttGAoyKQ4T3js
-
-Get the credentials from Docker Desktop and login to DHI.io:
-
-```shell
-echo index.docker.io | docker-credential-desktop get | jq -r '"-u \(.Username) --password-stdin"' | xargs -I {} sh -c 'echo $(echo index.docker.io | docker-credential-desktop get | jq -r .Secret) | docker login dhi.io {}'
-```
 
 ## Setup
 
@@ -658,107 +631,45 @@ Docker Bake is to Docker Build what Docker Compose is to Docker Run. It allows y
 
 ### Usage
 
-Create a comprehensive docker-bake.hcl:
+As we progressed through the Commandos, our build commands gradually became more complex.
+
+Go back to the Flask example, and examine the `docker-bake.hcl` file:
 
 ```hcl
-variable "REGISTRY" {
-  default = "your-dockerhub-username"
-}
-
-group "default" {
-  targets = ["app-dev", "app-prod"]
-}
-
-target "app-dev" {
+target "default" {
   context = "."
   dockerfile = "Dockerfile"
-  tags = ["${REGISTRY}/secure-app:dev"]
-  target = "development"
-  attest = [
-    "type=provenance,mode=max",
-    "type=sbom",
-  ]
-  platforms = ["linux/amd64"]
+  tags = ["flask-hello:latest"]
 }
+```
 
-target "app-prod" {
+It's a simple bake file that defines the build context, Dockerfile, and tags for the image. Now, let's add SBOM generation to the bake file:
+
+```hcl
+target "default" {
   context = "."
   dockerfile = "Dockerfile"
-  tags = [
-    "${REGISTRY}/secure-app:latest",
-    "${REGISTRY}/secure-app:v1.0"
-  ]
-  target = "production"
+  tags = ["flask-hello:latest"]
+
   attest = [
-    "type=provenance,mode=max",
-    "type=sbom",
-  ]
-  platforms = [
-    "linux/amd64",
-    "linux/arm64"
+    {
+      type = "sbom"
+    }
   ]
 }
 ```
-
-Create multi-stage Dockerfile with security practices:
-
-```dockerfile
-ARG BUILDKIT_SBOM_SCAN_STAGE=true
-FROM dhi.io/node:20-dev AS development
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-EXPOSE 3000
-CMD ["npm", "run", "dev"]
-
-FROM dhi.io/node:20 AS production
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-USER node
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-Build with Bake:
-
-```bash
-# Build all targets
-docker buildx bake --push
-
-# Build specific target
-docker buildx bake app-prod --push
-```
-
-Verify security attestations:
-
-```bash
-docker scout cves [your-dockerhub-username]/secure-app:latest
-```
-
-### Deep Dive: Infrastructure as Code for Container Security
-
-**Bake vs Traditional Scripts**:
-Traditional approach is error-prone with manual `docker build`, `docker tag`, `docker push` commands missing SBOM, provenance, and security scanning.
-
-Docker Bake provides declarative, repeatable builds with comprehensive security by default - attestations, multi-platform builds, and integrated caching.
-
-**SLSA Level 3 Compliance**: Docker Bake enables hermetic builds, reproducible builds, build provenance, and immutable build configurations in version control.
 
 ### Exercises
 
-- 8.1. Create Bake configuration with SBOM, provenance, and VEX attestations for multiple environments.
-- 8.2. Add multi-platform builds (linux/amd64, linux/arm64) and security gates.
-- 8.3. Implement centralized security templates that teams can inherit.
+- 8.1. Add provenance attestations to the bake file.
+- 8.2. Add multi-platform builds (linux/amd64, linux/arm64).
+- 8.3. Introduce variables for the tag and set default values. Then use the variables in the tag definition: `tags = ["${REPOSITORY}:${TAG}"]`
 
 ---
 
 ## Commando 9. The Zero-Day
 
-**Mission**: Agent Null reveals his true identity - he was with the Commandos from the beginning, but no one knew he was actually a zero-day vulnerability. He throws a smoke bomb and disappears, planning to free Angra Mainyu from the Black Forest.
+**Mission**: During the party, Artemisia and Rothütle come to Gord, "Artemisia says she senses something off with Null," Rothütle adds, "I think Null is a traitor, he might be working with the CVEs." As they are talking, they notice Null throwing a smoke bomb and disappearing. "He's escaping to the Black Forest, we need to stop him!" says Mina. And the Commandos start chasing Agent Null as he goes through a portal to the Black Forest.
 
 **Real-world context**: Zero-day vulnerabilities are the most dangerous threats - unknown to security systems with no CVE ID yet. Defense requires proactive security measures that protect against unknown attack vectors.
 
@@ -766,54 +677,7 @@ Agent Null is a master of disguise and deception, a metaphor for zero-day vulner
 
 ### Usage
 
-Implement least privilege with capability dropping:
-
-```bash
-# Run container with all capabilities dropped
-docker run --cap-drop=ALL \
-           --read-only \
-           --user 1000:1000 \
-           --tmpfs /tmp \
-           [your-app-image]
-```
-
-Create security-hardened Compose configuration:
-
-```yaml
-# compose.security.yaml
-services:
-  app:
-    image: your-app:latest
-    user: "1000:1000"
-    read_only: true
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE  # Only if needed for port 80/443
-    security_opt:
-      - no-new-privileges:true
-    tmpfs:
-      - /tmp
-      - /var/cache
-    volumes:
-      - ./app-data:/app/data:ro
-```
-
-Test runtime protection:
-
-```bash
-# Create a container that tries to escape
-docker run --rm -it \
-           --cap-drop=ALL \
-           --read-only \
-           --user 1000:1000 \
-           alpine sh
-
-# Inside container, try these (they should fail):
-# mount /dev/sda1 /mnt
-# touch /etc/passwd
-# su root
-```
+Implement the least privilege with capability dropping and kernel-level security features.
 
 ### Deep Dive: Defense-in-Depth and Zero-Day Mitigation
 
@@ -861,12 +725,11 @@ The hunt is complete, but Agent Null has escaped to the Black Forest. The Comman
 The Docker Commandos have secured Asgard, but Agent Null's escape means the adventure continues in the Black Forest...
 
 **Continue your security journey**:
-- 📚 Read "Docker and Kubernetes Security"
-- 🔍 Follow @DockerSecurity for threat intelligence
-- 🎯 Join the Docker Security community
-- 🚀 Implement these practices in production
+- 📚 Read "[Docker and Kubernetes Security](https://www.dockersecurity.io/)" for in-depth guides and best practices
+- 🔍 Read about the origin story of Docker Commandos in [Black Forest Shadow](https://buy.dockersecurity.io/)
+- 🎥 Watch the Docker Commandos in action in the [Dockerize Securely talk at Jfokus 2026](https://youtu.be/_SXz9TSz93w?si=0eJe8Jz2LCvKjvBl)
 
-*"The greatest victory is the attack that never happens because it cannot succeed."* - The Docker Commandos Creed
+*"The greatest victory is the attack that never happens."* - The Docker Commandos Creed
 
 ---
 
