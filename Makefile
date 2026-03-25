@@ -27,6 +27,7 @@ check:
 	check vexctl "version"; \
 	check oras "version"; \
 	check trivy "--version"; \
+	check cosign "version"; \
 	if docker buildx version > /dev/null 2>&1; then \
 		printf "  %-20s %s\n" "docker buildx" "OK  ($$(docker buildx version 2>&1 | head -1))"; \
 	else \

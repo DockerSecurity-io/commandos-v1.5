@@ -33,6 +33,7 @@ cd commandos-v1.5
 | `vexctl` | Create and manage VEX statements | [github.com/openvex/vexctl/releases](https://github.com/openvex/vexctl/releases) |
 | `oras` | Inspect OCI referrers (SBOMs, VEX, provenance) | [oras.land/docs/installation](https://oras.land/docs/installation) |
 | `trivy` | Alternative container image CVE scanner | [aquasecurity.github.io/trivy](https://aquasecurity.github.io/trivy/latest/getting-started/installation/) |
+| `cosign` | Sign and verify container images and attestations | `brew install cosign` (Mac) / [docs.sigstore.dev/cosign/system_config/installation](https://docs.sigstore.dev/cosign/system_config/installation/) (Windows) |
 | `jq` | JSON processing (used in DHI login script) | `brew install jq` (Mac) / [stedolan.github.io/jq](https://stedolan.github.io/jq/download/) (Windows) |
 
 

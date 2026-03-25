@@ -10,7 +10,8 @@ This repository contains the source code and resources for the **10 Docker Comma
 - 6️⃣ [Exempted CVEs](#commando-6-the-exempted-cves)
 - 7️⃣ [VEX Attestations](#commando-7-vex-attestation)
 - 8️⃣ [Docker Bake](#commando-8-docker-bake)
-- 9️⃣ [Zero-Day Defense](#commando-9-the-zero-day)
+- 9️⃣ [Cosign](#commando-9-cosign)
+- 0️⃣ [Zero-Day Defense](#commando-0-the-zero-day)
 
 **Key outcomes**: Automated vulnerability detection, reduced false positives, cryptographic supply chain verification, and defense-in-depth against unknown threats.
 
@@ -27,7 +28,8 @@ flowchart TD
     F --> G
     E --> H[Docker Bake]
     G --> H
-    H --> I[Zero-Day Defense]
+    H --> J[Cosign]
+    J --> I[Zero-Day Defense]
 
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -37,6 +39,7 @@ flowchart TD
     style F fill:#fff8e1
     style G fill:#f1f8e9
     style H fill:#e3f2fd
+    style J fill:#e8eaf6
     style I fill:#ffebee
 ```
 
@@ -667,7 +670,153 @@ target "default" {
 
 ---
 
-## Commando 9. The Zero-Day
+## Commando 9. Cosign
+
+**Mission**: With the party still going, Evie steps away from the celebration and quietly gets to work. One by one, she signs each SBOM attestation and each VEX attestation with her special pen, ensuring their originality — so that no CVE can forge or tamper with them. "A document without a signature is just a rumor," she says, holstering her pen.
+
+**Real-world context**: Cosign (part of the Sigstore project) lets you cryptographically sign container images and attestations. Consumers can then verify those signatures before running anything, closing the gap between what you built and what gets deployed.
+
+---
+
+_CLI reference: [Sigstore Cosign](https://docs.sigstore.dev/cosign/overview/)_
+
+### Usage
+
+To sign an image, first we need to generate a key pair. Set `COSIGN_PASSWORD` to use a non-interactive empty password (for workshop use only — use a strong password in production):
+
+```bash
+COSIGN_PASSWORD="" cosign generate-key-pair
+```
+
+This creates `cosign.key` (private) and `cosign.pub` (public). Sign the image after pushing it to a registry:
+
+```bash
+COSIGN_PASSWORD="" cosign sign --key cosign.key aerabi/flask-hello:with-sbom
+```
+
+The command takes about 40–60 seconds — it pushes the signature as an OCI referrer to the registry and records the signing event in the Sigstore Rekor transparency log. There is no progress output during this time.
+
+**Note**: Cosign will warn you when signing by tag instead of digest, because a tag can be reassigned to a different image. To suppress the warning and sign the exact image:
+
+```bash
+COSIGN_PASSWORD="" cosign sign --key cosign.key \
+  aerabi/flask-hello@sha256:<image-digest>
+```
+
+To verify the signature:
+
+```bash
+cosign verify --key cosign.pub aerabi/flask-hello:with-sbom
+```
+
+A successful verification confirms the image has not been tampered with since it was signed.
+
+To visualise all cosign-related artifacts attached to an image (signatures, SBOMs, attestations):
+
+```bash
+cosign tree index.docker.io/aerabi/flask-hello:with-sbom
+```
+
+#### Keyless signing with Sigstore
+
+For CI/CD pipelines, Cosign supports keyless signing using short-lived OIDC certificates — no long-lived private keys to manage:
+
+```bash
+cosign sign aerabi/flask-hello:with-sbom
+```
+
+The signature is anchored in the Sigstore Rekor transparency log, providing a publicly auditable record.
+
+### Deep Dive: Sigstore and Supply Chain Trust
+
+**Sigstore** is an open-source project (backed by Linux Foundation) that provides free, transparent signing infrastructure:
+
+- **Cosign**: Signs and verifies container images and attestations
+- **Fulcio**: A free certificate authority that issues short-lived signing certificates via OIDC
+- **Rekor**: An immutable, append-only transparency log recording all signing events
+
+**Why signatures matter**: An SBOM or VEX statement without a signature is just a claim. Cosign binds the attestation cryptographically to the identity that produced it, so consumers can detect forgery or tampering even after the image has traveled through multiple registries.
+
+**DHI images** have all their attestations — SBOM, VEX, and provenance — signed with Cosign and recorded in Rekor, which is why `oras discover` shows `application/vnd.dev.cosign.artifact.sig.v1+json` referrers alongside every attestation.
+
+### Exercises
+
+- 9.1. Sign the image that was pushed to the registry in Commando 7:
+  ```bash
+  COSIGN_PASSWORD="" cosign sign --key cosign.key aerabi/flask-hello:with-sbom
+  ```
+  The command takes ~40–60 seconds with no progress output — it is uploading the signature to the registry and recording it in Rekor. Verify the signature is attached as an OCI referrer:
+  ```bash
+  cosign verify --key cosign.pub aerabi/flask-hello:with-sbom
+  ```
+
+- 9.2. The BuildKit SBOM embedded in the image manifest is not a standalone OCI referrer, so Cosign cannot sign it directly. Extract it to disk first:
+  ```bash
+  docker buildx build \
+    --sbom=true \
+    --output type=local,dest=./attestation-output \
+    -t aerabi/flask-hello:with-sbom .
+  ```
+  The `--output type=local` flag extracts the full image filesystem plus `sbom.spdx.json` into `./attestation-output/`. Note: the build may print a storage-commit error on some Docker Desktop versions — the SBOM is still written to the output directory.
+
+- 9.3. Attach the on-disk SBOM to the image in the registry using `cosign attach sbom`:
+  ```bash
+  cosign attach sbom \
+    --sbom ./attestation-output/sbom.spdx.json \
+    aerabi/flask-hello:with-sbom
+  ```
+  > **Note**: `cosign attach sbom` is deprecated (see [sigstore/cosign#2755](https://github.com/sigstore/cosign/issues/2755)). It uses a tag-based storage convention (`sha256-<digest>.sbom`) rather than the OCI referrers API, so the SBOM does **not** appear in `oras discover` on the main image. For new workflows, `cosign attest --predicate` attaches and signs the SBOM in one step as a proper OCI referrer.
+
+  Confirm the SBOM tag was created (note: `oras discover` requires the full registry hostname):
+  ```bash
+  oras discover index.docker.io/aerabi/flask-hello:sha256-<image-digest>.sbom
+  ```
+
+- 9.4. `cosign attach sbom` uploads the SBOM without signing it. Sign the SBOM artifact by its digest (printed by the attach command):
+  ```bash
+  COSIGN_PASSWORD="" cosign sign --key cosign.key \
+    aerabi/flask-hello@sha256:<sbom-artifact-digest>
+  ```
+  Like signing the image, this takes ~40–60 seconds and produces no progress output.
+
+- 9.5. The deprecated two-step approach (attach, then sign separately) is now behind us. The proper way is `cosign attest`, which wraps the SBOM in a DSSE envelope, signs it, and stores it as a true OCI referrer — all in one step:
+  ```bash
+  COSIGN_PASSWORD="" cosign attest \
+    --key cosign.key \
+    --predicate ./attestation-output/sbom.spdx.json \
+    --type spdxjson \
+    aerabi/flask-hello:with-sbom
+  ```
+  Unlike `cosign attach sbom`, the result shows up in `oras discover` and `cosign tree` as an OCI referrer. Verify the attestation and its signature (the output will be large — it contains the full SBOM payload):
+  ```bash
+  cosign verify-attestation \
+    --key cosign.pub \
+    --type spdxjson \
+    aerabi/flask-hello:with-sbom | jq '.'
+  ```
+  > **Note**: In cosign v3, the `oras discover` annotation `dev.sigstore.bundle.predicateType` is always set to `https://sigstore.dev/cosign/sign/v1` for all bundle types, including attestations. The actual predicate type (`https://spdx.dev/Document`) lives inside the DSSE envelope payload. To tell apart an attestation from a plain signature in `oras discover`, look at the layer size: signatures are ~600 bytes; SBOM attestations are several MB.
+
+- 9.6. The OCI referrer attestation created by `cosign attest` is itself a registry artifact with its own digest. You can sign it with `cosign sign`, adding an extra layer of provenance. Get the attestation digest from `oras discover`, then:
+  ```bash
+  COSIGN_PASSWORD="" cosign sign --key cosign.key \
+    aerabi/flask-hello@sha256:<attestation-referrer-digest>
+  ```
+  Confirm the signature is stored as a referrer on the attestation itself:
+  ```bash
+  oras discover index.docker.io/aerabi/flask-hello@sha256:<attestation-referrer-digest>
+  ```
+  This produces a chain: image → SBOM attestation → signature of attestation.
+
+- 9.7. Investigate whether the VEX attestation from Commando 7 is signable by Cosign:
+  ```bash
+  cosign tree index.docker.io/aerabi/flask-hello:with-sbom
+  oras discover index.docker.io/aerabi/flask-hello:with-sbom
+  ```
+  **Finding**: `docker scout attestation add` stores VEX attestations in Docker Scout's own cloud infrastructure — they do not appear as OCI referrers in the registry. Neither `cosign tree` nor `oras discover` shows them. Cosign cannot sign a VEX stored this way. To sign a VEX with Cosign, attach it independently using `cosign attest --predicate exemption.vex.json --type https://openvex.dev/ns/v0.2.0`, which creates it as a proper signed OCI referrer.
+
+---
+
+## Commando 0. The Zero-Day
 
 **Mission**: During the party, Artemisia and Rothütle come to Gord, "Artemisia says she senses something off with Null," Rothütle adds, "I think Null is a traitor, he might be working with the CVEs." As they are talking, they notice Null throwing a smoke bomb and disappearing. "He's escaping to the Black Forest, we need to stop him!" says Mina. And the Commandos start chasing Agent Null as he goes through a portal to the Black Forest.
 
@@ -696,10 +845,10 @@ Implement the least privilege with capability dropping and kernel-level security
 
 ### Exercises
 
-- 9.1. Design a zero-day defense strategy with layered security controls.
-- 9.2. Implement runtime monitoring with Falco or behavioral analysis.
-- 9.3. Create incident response procedures for unknown threat detection.
-- 9.4. Test defenses against container escape techniques.
+- 0.1. Design a zero-day defense strategy with layered security controls.
+- 0.2. Implement runtime monitoring with Falco or behavioral analysis.
+- 0.3. Create incident response procedures for unknown threat detection.
+- 0.4. Test defenses against container escape techniques.
 
 ---
 
