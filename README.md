@@ -15,6 +15,8 @@ This repository contains the source code and resources for the **10 Docker Comma
 
 **Key outcomes**: Automated vulnerability detection, reduced false positives, cryptographic supply chain verification, and defense-in-depth against unknown threats.
 
+**Download PDF**: Docker Commandos Field Manual @ [buy.DockerSecurity.io](https://buy.dockersecurity.io/)
+
 ## Command Dependencies
 
 ```mermaid
@@ -451,6 +453,8 @@ docker compose up --build
 
 **Mission**: Mina returns from her patrol and tells Gord, "I found a few remaining CVEs, but they are not dangerous. We can let them be."
 
+![Mina finds a depressed CVE](https://dockersecurity.io/commandos-asgard/asgard-useless.png)
+
 **Real-world context**: Not all CVEs are exploitable in your specific context. VEX (Vulnerability Exploitability eXchange) allows you to mark CVEs as not applicable to reduce alert noise and focus on real threats.
 
 ---
@@ -858,18 +862,19 @@ The hunt is complete, but Agent Null has escaped to the Black Forest. The Comman
 
 ### Victory Conditions
 
-✅ All builds generate SBOM and provenance attestations
-✅ Hardened base images reduce attack surface
-✅ VEX statements eliminate false positive noise
-✅ Automated scanning prevents vulnerable deployments
-✅ Zero-day defenses protect against unknown threats
+- ✅ All builds generate SBOM and provenance attestations
+- ✅ Hardened base images reduce attack surface
+- ✅ VEX statements eliminate false positive noise
+- ✅ Automated scanning prevents vulnerable deployments
+- ✅ Signed images and attestations enforces trust
+- ✅ Zero-day defenses protect against unknown threats
 
 ### Enterprise Readiness Checklist
 
-**Policy**: Container security policy, SBOM requirements, VEX approval process
-**Technical**: Attestations, hardened images, automated scanning, VEX integration
-**Operations**: Security gates, runtime monitoring, regular reviews
-**Compliance**: Auditable evidence, regulatory alignment, documentation
+- **Policy**: Container security policy, SBOM requirements, VEX approval process
+- **Technical**: Attestations, hardened images, automated scanning, VEX integration
+- **Operations**: Security gates, runtime monitoring, regular reviews
+- **Compliance**: Auditable evidence, regulatory alignment, documentation
 
 The Docker Commandos have secured Asgard, but Agent Null's escape means the adventure continues in the Black Forest...
 
