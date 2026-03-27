@@ -239,12 +239,6 @@ docker scout cves flask-server:latest
 
 You can also check the vulnerabilities using the Docker Desktop UI. Just go to the "Images" tab, select the image, and click on "Scout".
 
-There are also recommendations for the image, which you can check by running:
-
-```bash
-docker scout recommendations flask-server
-```
-
 Try comparing base images for security:
 
 ```bash
@@ -276,9 +270,8 @@ docker scout cves my-react-app
 
 ### Exercises
 
-- 3.1. Try to fix the vulnerabilities in the Flask image using the recommendations from Docker Scout.
-- 3.2. Build an application with an old base image (e.g., `node:14`) and compare Scout results with newer versions.
-- 3.3. Use the `--details` flag to get more information about specific vulnerabilities.
+- 3.1. Build an application with an old base image (e.g., `node:14`) and compare Scout results with newer versions.
+- 3.2. Use the `--details` flag to get more information about specific vulnerabilities.
 
 ---
 
@@ -358,9 +351,8 @@ SBOM of image already cached, 208 packages indexed
 
 ### Exercises
 
-- 4.1. Create a Docker Bake file for the C++ example with SBOM attestations.
-- 4.2. Store the SBOM locally: `docker buildx build --sbom=true --sbom-output=type=local,dest=. -t test-image .`
-- 4.3. Compare SBOM results with and without `BUILDKIT_SBOM_SCAN_STAGE=true` for a multi-stage build.
+- 4.1. Store the SBOM locally: `docker buildx build --sbom=true --sbom-output=type=local,dest=. -t test-image .`
+- 4.2. Compare SBOM results with and without `BUILDKIT_SBOM_SCAN_STAGE=true` for a multi-stage build.
 
 ---
 
@@ -557,7 +549,7 @@ Let's build the Flask example with SBOM attestations enabled and push to Docker 
 docker buildx build \
   --sbom=true \
   --provenance=true \
-  --push
+  --push \
   -t aerabi/flask-hello:with-sbom .
 ```
 
@@ -671,6 +663,7 @@ target "default" {
 - 8.1. Add provenance attestations to the bake file.
 - 8.2. Add multi-platform builds (linux/amd64, linux/arm64).
 - 8.3. Introduce variables for the tag and set default values. Then use the variables in the tag definition: `tags = ["${REPOSITORY}:${TAG}"]`
+- 8.4. Create a Docker Bake file for the C++ example with SBOM attestations.
 
 ---
 
