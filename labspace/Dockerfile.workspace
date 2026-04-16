@@ -1,6 +1,9 @@
 # Base image with tools and VSCode (coder)
 FROM dockersamples/labspace-workspace:latest
 
+ARG TARGETOS
+ARG TARGETARCH
+
 USER root
 
 # Install system dependencies
@@ -11,27 +14,32 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
+ARG ORAS_VERSION=1.2.2
+
 # Install cosign
-RUN curl -L https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o /usr/local/bin/cosign \
+RUN curl -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-${TARGETOS}-${TARGETARCH}" -o /usr/local/bin/cosign \
     && chmod +x /usr/local/bin/cosign
 
 # Install oras
-RUN curl -LO https://github.com/oras-project/oras/releases/download/v1.2.2/oras_1.2.2_linux_amd64.tar.gz \
+RUN curl -LO "https://github.com/oras-project/oras/releases/download/v${ORAS_VERSION}/oras_${ORAS_VERSION}_${TARGETOS}_${TARGETARCH}.tar.gz" \
     && mkdir -p oras-install \
-    && tar -zxf oras_1.2.2_linux_amd64.tar.gz -C oras-install \
+    && tar -zxf "oras_${ORAS_VERSION}_${TARGETOS}_${TARGETARCH}.tar.gz" -C oras-install \
     && mv oras-install/oras /usr/local/bin/ \
-    && rm -rf oras_1.2.2_linux_amd64.tar.gz oras-install
+    && rm -rf "oras_${ORAS_VERSION}_${TARGETOS}_${TARGETARCH}.tar.gz" oras-install
 
 # Install vexctl
-RUN curl -L https://github.com/openvex/vexctl/releases/latest/download/vexctl-linux-amd64 -o /usr/local/bin/vexctl \
+RUN curl -L "https://github.com/openvex/vexctl/releases/latest/download/vexctl-${TARGETOS}-${TARGETARCH}" -o /usr/local/bin/vexctl \
     && chmod +x /usr/local/bin/vexctl
 
 # Install trivy
-RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.50.1
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.69.3
 
-# Pre-copy the project files into the workspace
-# This removes the need for bind mounts in the final OCI labspace
-COPY . /home/coder/project/
+# Copy only the student-facing project files into the workspace.
+# The build context is the repo root, so avoid a broad COPY . here.
+COPY Makefile README.md installation.md /home/coder/project/
+COPY cpp /home/coder/project/cpp
+COPY flask /home/coder/project/flask
+COPY flask-init /home/coder/project/flask-init
 
 # Ensure correct permissions
 RUN chown -R coder:coder /home/coder/project
