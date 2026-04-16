@@ -1,0 +1,41 @@
+name: Build and Push Workspace Image
+
+on:
+  push:
+    branches:
+      - labspace
+    paths:
+      - 'labspace/Dockerfile.workspace'
+      - 'cpp/**'
+      - 'flask/**'
+      - 'flask-init/**'
+      - 'Makefile'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Workspace
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: labspace/Dockerfile.workspace
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/docker-commandos-workspace:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/docker-commandos-workspace:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -14,7 +14,8 @@ services:
       - ./instructions:/labspace/instructions:ro
 
   workspace:
-    image: dockersamples/labspace-workspace
-    volumes:
-      # Explicitly mount the repo root to the workspace project directory
-      - ..:/home/coder/project:rw
+    # Use the custom workspace image we built
+    # For local dev, you can build it with: 
+    # docker build -t docker-commandos-workspace -f Dockerfile.workspace ..
+    image: docker-commandos-workspace
+    # No volume mount needed because files are baked into the image!

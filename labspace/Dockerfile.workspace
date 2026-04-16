@@ -1,0 +1,46 @@
+# Base image with tools and VSCode (coder)
+FROM dockersamples/labspace-workspace:latest
+
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    make \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cosign
+RUN curl -L https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o /usr/local/bin/cosign \
+    && chmod +x /usr/local/bin/cosign
+
+# Install oras
+RUN curl -LO https://github.com/oras-project/oras/releases/download/v1.2.2/oras_1.2.2_linux_amd64.tar.gz \
+    && mkdir -p oras-install \
+    && tar -zxf oras_1.2.2_linux_amd64.tar.gz -C oras-install \
+    && mv oras-install/oras /usr/local/bin/ \
+    && rm -rf oras_1.2.2_linux_amd64.tar.gz oras-install
+
+# Install vexctl
+RUN curl -L https://github.com/openvex/vexctl/releases/latest/download/vexctl-linux-amd64 -o /usr/local/bin/vexctl \
+    && chmod +x /usr/local/bin/vexctl
+
+# Install trivy
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.50.1
+
+# Pre-copy the project files into the workspace
+# This removes the need for bind mounts in the final OCI labspace
+COPY . /home/coder/project/
+
+# Ensure correct permissions
+RUN chown -R coder:coder /home/coder/project
+
+USER coder
+WORKDIR /home/coder/project
+
+# This is the "Fat Image" strategy. 
+# We can't easily 'docker pull' inside a Dockerfile build (it requires DIND),
+# so we rely on the student pulling this workspace once, 
+# and the workshop start script can handle background pulling if needed.
+# Alternatively, we just ensure the user knows to run 'make pull' first.
