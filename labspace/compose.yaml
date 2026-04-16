@@ -11,21 +11,13 @@ services:
 
   interface:
     volumes:
-      - ./instructions:/labspace/instructions:ro
+      - .:/labspace/instructions:ro
 
   workspace:
-    # Build the custom workspace image from the repo root so the
-    # student project files are baked into /home/coder/project.
+    # Build the custom workspace image from the repo root.
     build:
       context: ..
       dockerfile: labspace/Dockerfile.workspace
     image: aerabi/docker-commandos-workspace
-    # The included labspace-content-dev bundle stages repo content into the
-    # labspace-content volume, which the workspace mounts at /home/coder/project.
-    volumes:
-      - ../cpp:/home/coder/project/cpp:ro
-      - ../flask:/home/coder/project/flash:ro
-      - ../flask-init:/home/coder/project/flask-init:ro
-      - ../installation.md:/home/coder/project/installation.md:ro
-      - ../Makefile:/home/coder/project/Makefile:ro
-      - ../README.md:/home/coder/project/README.md:ro
+    # The included labspace-content-dev bundle stages the repo's `project/`
+    # directory into the labspace-content volume at /home/coder/project.

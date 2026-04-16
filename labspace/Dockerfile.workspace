@@ -31,21 +31,8 @@ RUN curl -LO "https://github.com/oras-project/oras/releases/download/v${ORAS_VER
 RUN curl -L "https://github.com/openvex/vexctl/releases/latest/download/vexctl-${TARGETOS}-${TARGETARCH}" -o /usr/local/bin/vexctl \
     && chmod +x /usr/local/bin/vexctl
 
-# Install Docker SBOM CLI plugin
-RUN curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
-
 # Install trivy
 RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.69.3
-
-# Copy only the student-facing project files into the workspace.
-# The build context is the repo root, so avoid a broad COPY . here.
-COPY Makefile README.md installation.md /home/coder/project/
-COPY cpp /home/coder/project/cpp
-COPY flask /home/coder/project/flask
-COPY flask-init /home/coder/project/flask-init
-
-# Ensure correct permissions
-RUN chown -R coder:coder /home/coder/project
 
 USER coder
 WORKDIR /home/coder/project

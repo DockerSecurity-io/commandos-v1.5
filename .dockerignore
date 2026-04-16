@@ -1,12 +1,5 @@
 *
-!Makefile
-!README.md
-!installation.md
-!cpp
-!cpp/**
-!flask
-!flask/**
-!flask-init
-!flask-init/**
+!project
+!project/**
 !labspace
-!labspace/Dockerfile.workspace
+!labspace/**
