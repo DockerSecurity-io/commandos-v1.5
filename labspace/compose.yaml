@@ -1,0 +1,17 @@
+# This Docker Compose file allows you to run the Labspace locally for development.
+# It uses the Docker Labspace content-dev base.
+
+include:
+  - oci://docker.io/dockersamples/labspace-content-dev:latest
+
+services:
+  configurator:
+    environment:
+      PROJECT_CLONE_URL: https://github.com/DockerSecurity-io/commandos-v1.5
+
+  interface:
+    volumes:
+      - ./instructions:/labspace/instructions:ro
+
+  workspace:
+    image: dockersamples/labspace-workspace
