@@ -31,6 +31,9 @@ RUN curl -LO "https://github.com/oras-project/oras/releases/download/v${ORAS_VER
 RUN curl -L "https://github.com/openvex/vexctl/releases/latest/download/vexctl-${TARGETOS}-${TARGETARCH}" -o /usr/local/bin/vexctl \
     && chmod +x /usr/local/bin/vexctl
 
+# Install Docker SBOM CLI plugin
+RUN curl -sSfL https://raw.githubusercontent.com/docker/sbom-cli-plugin/main/install.sh | sh -s --
+
 # Install trivy
 RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.69.3
 
