@@ -15,3 +15,6 @@ services:
 
   workspace:
     image: dockersamples/labspace-workspace
+    volumes:
+      # Explicitly mount the repo root to the workspace project directory
+      - ..:/home/coder/project:rw
